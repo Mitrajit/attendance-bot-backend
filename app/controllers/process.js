@@ -1,4 +1,9 @@
+const fs = require('fs');
+const path = require('path');
+
 const { save, registerFace, recogniseFace } = require('../services/register');
+
+const attendance = require('../../data/attendance.json');
 
 const register = async (req, res) => {
   try {
@@ -38,7 +43,21 @@ const recognise = async (req, res) => {
     if (data.name) {
       if (data.name === 'Unknown')
         throw new Error('Face not found in database.');
-      else return res.status(200).json(data);
+      else {
+        // If data.name already present in attendance.json
+        if (attendance[data.name]){
+        data.name = `${data.name} is marked already as present.`
+          return res.status(200).json(data);
+        }
+        // Mark data.name as present in attendance.json
+        attendance[data.name] = true;
+        fs.writeFileSync(
+          path.join(__dirname, '../../data/attendance.json'),
+          JSON.stringify(attendance)
+        );
+        data.name = `${data.name} is marked as present.`
+        return res.status(200).json(data);
+      }
     }
     throw new Error(data);
   } catch (err) {
