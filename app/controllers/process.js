@@ -17,10 +17,11 @@ const register = async (req, res) => {
 
     // Save the model in data/faces
     return res.status(200).json({ message: 'User registered successfully.' });
-
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: 'Please try again. Internal server error' });
+    res
+      .status(500)
+      .json({ message: 'Please try again. Internal server error' });
   }
 };
 
@@ -34,10 +35,17 @@ const recognise = async (req, res) => {
 
     // Return the name of the person
     const data = await recogniseFace();
-    return res.status(200).json(data);
+    if (data.name) {
+      if (data.name === 'Unknown')
+        throw new Error('Face not found in database.');
+      else return res.status(200).json(data);
+    }
+    throw new Error(data);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: 'Internal server error' });
+    if (err.message === 'Face not found in database.')
+      return res.status(400).json({ message: err.message });
+    res.status(500).json(err);
   }
 };
 
